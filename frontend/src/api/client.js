@@ -309,26 +309,55 @@ export async function fetchManualPrediction(formData) {
   }
 
   const aqiEst = Math.min(500, Math.max(10, (formData.pm2_5 * 2.1) + (formData.pm10 * 0.4) + (formData.no2 * 0.3)));
+  const aqiCat = aqiEst <= 50 ? "Good" : aqiEst <= 100 ? "Satisfactory" : aqiEst <= 200 ? "Moderate" : aqiEst <= 300 ? "Poor" : "Severe";
+  const colorCode = aqiEst <= 50 ? "#10b981" : aqiEst <= 100 ? "#84cc16" : aqiEst <= 200 ? "#eab308" : aqiEst <= 300 ? "#f97316" : "#ef4444";
+
   const healthScore = Math.min(10, Math.max(1, 1.8 + (aqiEst * 0.024) + (formData.temperature > 35 ? 0.8 : 0)));
   const riskClass = healthScore <= 3.8955 ? 0 : healthScore <= 5.0735 ? 1 : 2;
   const riskLabels = ["Low Risk", "Moderate Risk", "High Risk"];
 
+  // Identify dominant pollutant in simulation
+  const dominantPollutant = formData.pm2_5 > 60 ? "Fine Particulate Matter (PM2.5)"
+    : formData.no2 > 40 ? "Nitrogen Dioxide (NO2)"
+    : formData.o3 > 50 ? "Ground Ozone (O3)"
+    : "Coarse Particulates (PM10)";
+
   return {
+    location: {
+      city: formData.city || "Chennai",
+      state: formData.state || "Tamil Nadu",
+      country: "India",
+      population: formData.population || 7090000
+    },
     aqi_prediction: {
       predicted_aqi: Math.round(aqiEst * 10) / 10,
-      aqi_category: aqiEst <= 50 ? "Good" : aqiEst <= 100 ? "Satisfactory" : aqiEst <= 200 ? "Moderate" : aqiEst <= 300 ? "Poor" : "Severe",
-      color_code: aqiEst <= 50 ? "#10b981" : aqiEst <= 100 ? "#84cc16" : aqiEst <= 200 ? "#eab308" : aqiEst <= 300 ? "#f97316" : "#ef4444",
-      aqi_meaning: "Estimated from simulated atmospheric pollutant levels."
+      aqi_category: aqiCat,
+      color_code: colorCode,
+      aqi_meaning: `Simulated atmospheric conditions project ${aqiCat.toLowerCase()} air quality in ${formData.city}.`
     },
     health_prediction: {
       health_impact_score: Math.round(healthScore * 100) / 100,
       risk_class: riskClass,
       risk_label: riskLabels[riskClass],
-      risk_description: "Projected physiological risk under simulated atmospheric parameters.",
+      risk_description: `Projected physiological risk index calculated for ${formData.city} based on simulated air pollutant and weather inputs.`,
       top_health_factors: [
         { feature: "Fine Particulate Matter (PM2.5)", importance: 0.52, direction: "increases_risk", display_name: "PM2.5 (Simulated)" },
-        { feature: "Temperature", importance: 0.28, direction: "increases_risk", display_name: "Ambient Temperature" }
+        { feature: "Coarse Dust (PM10)", importance: 0.26, direction: "increases_risk", display_name: "PM10 (Simulated)" },
+        { feature: "Ambient Temperature", importance: 0.16, direction: "increases_risk", display_name: "Temperature" }
       ]
+    },
+    advisory: {
+      primary_health_advice: riskClass === 2
+        ? `High pollution stress simulated for ${formData.city}. Fine particulate concentrations will cause acute respiratory irritation and cardiovascular strain. Sensitive demographics must limit outdoor exposure.`
+        : riskClass === 1
+        ? `Moderate atmospheric load simulated for ${formData.city}. Sensitive demographics may experience mild airway dryness and should pace outdoor workouts.`
+        : `Simulated air quality in ${formData.city} is clean and favorable. Normal outdoor physical activities and natural ventilation are safe.`,
+      activity_guidelines: {
+        outdoor_exercise: riskClass === 2 ? "Avoid strenuous outdoor workouts and running" : riskClass === 1 ? "Permitted with moderate pacing; avoid heavy traffic hours" : "Safe for all outdoor physical sports",
+        mask_recommendation: riskClass === 2 ? "N95 / FFP2 mask strongly recommended outdoors" : riskClass === 1 ? "Recommended for elderly and asthmatics during traffic" : "Optional for general public",
+        ventilation: riskClass === 2 ? "Keep windows closed and run indoor air purifiers" : "Safe to ventilate indoor living spaces",
+        sensitive_groups_action: riskClass === 2 ? "Asthma and cardiac patients should remain indoors and keep inhalers accessible" : "Standard baseline precautions"
+      }
     }
   };
 }
