@@ -101,18 +101,15 @@ def generate_health_advisory(
     weather: dict
 ) -> tuple[List[str], Dict[str, Any]]:
     """
-    Explainable AI (XAI) Health Advisory Engine.
-    Dynamically derives clinical pathways and demographic guidance using SHAP feature attribution
-    rather than rigid static thresholds.
+    Personalized Environmental & Clinical Health Advisory Engine.
+    Derives biological pathways and clinical precautions based on the dominant environmental stressors.
     """
-    # 1. Extract Top SHAP Drivers
     primary_factor = top_factors[0] if top_factors else {"feature": "PM2.5", "impact": 0.45, "direction": "increases risk"}
     secondary_factor = top_factors[1] if len(top_factors) > 1 else {"feature": "PM10", "impact": 0.25, "direction": "increases risk"}
 
     prim_name = primary_factor["feature"]
     sec_name = secondary_factor["feature"]
 
-    # Match to clinical pathway dictionary
     def get_pathway(feat_name: str):
         for k, v in POLLUTANT_CLINICAL_PATHWAYS.items():
             if k.lower() in feat_name.lower() or feat_name.lower() in k.lower():
@@ -122,20 +119,18 @@ def generate_health_advisory(
     prim_pathway = get_pathway(prim_name)
     sec_pathway = get_pathway(sec_name)
 
-    # 2. Compute Explainable SHAP Clinical Syntheses
-    total_shap_impact = sum(f.get("impact", 0.1) for f in top_factors) or 1.0
-    prim_pct = int((primary_factor.get("impact", 0.5) / total_shap_impact) * 100)
-    sec_pct = int((secondary_factor.get("impact", 0.25) / total_shap_impact) * 100)
+    total_impact = sum(f.get("impact", 0.1) for f in top_factors) or 1.0
+    prim_pct = int((primary_factor.get("impact", 0.5) / total_impact) * 100)
+    sec_pct = int((secondary_factor.get("impact", 0.25) / total_impact) * 100)
 
-    # 3. Dynamic Demographics Guidance synthesized by XAI
     demographics = {
         "Infants & Children (0-14 yrs)": {
             "title": "Infants & School Children (0–14 yrs)",
-            "primary_driver": f"{prim_name} (+{primary_factor.get('impact', 0.4):.2f} SHAP impact, {prim_pct}% contribution)",
-            "secondary_driver": f"{sec_name} ({sec_pct}% contribution)",
+            "primary_driver": f"Primary Trigger: {prim_name} ({prim_pct}% relative impact)",
+            "secondary_driver": f"Secondary Stressor: {sec_name} ({sec_pct}% relative impact)",
             "physiological_mechanism": prim_pathway["children"],
             "impact": (
-                f"Explainable AI shows {prim_name} is the primary driver ({prim_pct}% attribution). "
+                f"{prim_name} is currently the primary environmental stressor ({prim_pct}% relative contribution). "
                 f"{prim_pathway['children']} High respiratory rates accelerate cumulative alveolar deposition."
             ),
             "precaution": (
@@ -144,11 +139,11 @@ def generate_health_advisory(
         },
         "Adults & Outdoor Workers": {
             "title": "Adult Commuters & Outdoor Workers",
-            "primary_driver": f"{prim_name} (+{primary_factor.get('impact', 0.4):.2f} SHAP impact)",
-            "secondary_driver": f"{sec_name} (+{secondary_factor.get('impact', 0.2):.2f} SHAP impact)",
+            "primary_driver": f"Primary Trigger: {prim_name}",
+            "secondary_driver": f"Secondary Stressor: {sec_name}",
             "physiological_mechanism": prim_pathway["commuters"],
             "impact": (
-                f"SHAP attribution identifies {prim_name} ({primary_factor.get('value', '')}) as driving acute exertion fatigue. "
+                f"Elevated atmospheric {prim_name} is the leading contributor to physical fatigue and airway strain during daily commute. "
                 f"{prim_pathway['commuters']} Combined with {sec_name}, it elevates respiratory airway resistance."
             ),
             "precaution": (
@@ -157,11 +152,11 @@ def generate_health_advisory(
         },
         "Senior Citizens (60+ yrs)": {
             "title": "Older Adults & Senior Citizens (60+ yrs)",
-            "primary_driver": f"{prim_name} (+{primary_factor.get('impact', 0.4):.2f} SHAP impact)",
-            "secondary_driver": f"{sec_name} (+{secondary_factor.get('impact', 0.2):.2f} SHAP impact)",
+            "primary_driver": f"Primary Trigger: {prim_name}",
+            "secondary_driver": f"Secondary Stressor: {sec_name}",
             "physiological_mechanism": prim_pathway["seniors"],
             "impact": (
-                f"Model XAI highlights {prim_name} as accelerating cardiopulmonary strain. "
+                f"Current levels of {prim_name} increase cardiopulmonary workload. "
                 f"{prim_pathway['seniors']} Blended atmospheric load elevates resting systolic pressure."
             ),
             "precaution": (
@@ -170,11 +165,11 @@ def generate_health_advisory(
         },
         "Asthma, COPD & Respiratory Illness": {
             "title": "Patients with Asthma & Chronic Respiratory Illness",
-            "primary_driver": f"{prim_name} (+{primary_factor.get('impact', 0.4):.2f} SHAP impact)",
-            "secondary_driver": f"{sec_name} ({sec_pct}% contribution)",
+            "primary_driver": f"Primary Trigger: {prim_name}",
+            "secondary_driver": f"Secondary Stressor: {sec_name}",
             "physiological_mechanism": prim_pathway["asthma"],
             "impact": (
-                f"XAI identifies {prim_name} as triggering acute bronchial hyper-responsiveness. "
+                f"{prim_name} is the primary trigger for acute bronchial hyper-responsiveness. "
                 f"{prim_pathway['asthma']} High risk of bronchospasms and sudden peak expiratory flow drop."
             ),
             "precaution": (
@@ -183,11 +178,11 @@ def generate_health_advisory(
         },
         "Cardiovascular & Hypertension Patients": {
             "title": "Cardiovascular & Hypertension Patients",
-            "primary_driver": f"{prim_name} (+{primary_factor.get('impact', 0.4):.2f} SHAP impact)",
-            "secondary_driver": f"{sec_name} ({sec_pct}% contribution)",
+            "primary_driver": f"Primary Trigger: {prim_name}",
+            "secondary_driver": f"Secondary Stressor: {sec_name}",
             "physiological_mechanism": prim_pathway["cardiac"],
             "impact": (
-                f"SHAP feature weighting confirms {prim_name} drives systemic vascular resistance. "
+                f"Elevated levels of {prim_name} stimulate autonomic vasoconstriction. "
                 f"{prim_pathway['cardiac']} Elevates myocardial oxygen consumption under current ambient load."
             ),
             "precaution": (
@@ -196,11 +191,11 @@ def generate_health_advisory(
         },
         "Pregnant Women": {
             "title": "Expectant Mothers & Prenatal Health",
-            "primary_driver": f"{prim_name} (+{primary_factor.get('impact', 0.4):.2f} SHAP impact)",
-            "secondary_driver": f"{sec_name} ({sec_pct}% contribution)",
+            "primary_driver": f"Primary Trigger: {prim_name}",
+            "secondary_driver": f"Secondary Stressor: {sec_name}",
             "physiological_mechanism": prim_pathway["pregnancy"],
             "impact": (
-                f"XAI feature analysis links {prim_name} to maternal systemic oxidative markers. "
+                f"Atmospheric concentration of {prim_name} increases maternal systemic oxidative stress. "
                 f"{prim_pathway['pregnancy']}"
             ),
             "precaution": (
@@ -209,24 +204,21 @@ def generate_health_advisory(
         }
     }
 
-    # 4. Synthesize AI Advisory Statements
     advice = [
-        f"Explainable AI identifies {prim_name} ({prim_pct}% SHAP contribution) and {sec_name} ({sec_pct}% SHAP contribution) as the primary risk drivers.",
-        f"Biological pathway: {prim_pathway['mechanism']}.",
-        f"Targeted clinical recommendation: {prim_pathway['action']}"
+        f"Environmental analysis identifies {prim_name} ({prim_pct}% relative impact) and {sec_name} ({sec_pct}% relative impact) as the leading air quality stressors.",
+        f"Physiological pathway: {prim_pathway['mechanism']}.",
+        f"Targeted recommendation: {prim_pathway['action']}"
     ]
 
     actions = [
-        f"Targeted action against {prim_name}: {prim_pathway['action']}",
-        f"Sensitive groups (Asthma/Cardiovascular): Limit exposure during peak {prim_name} concentration intervals.",
-        f"Indoor management: Seal living environments and run continuous HEPA/carbon filtration."
+        f"Primary precaution: {prim_pathway['action']}",
+        f"Sensitive demographics (Asthma/Cardiovascular): Limit outdoor exposure during peak {prim_name} intervals.",
+        f"Indoor protection: Seal living spaces and run continuous particulate air filtration."
     ]
 
     decision_support = {
         "aqi_status": aqi_cat,
         "primary_pollutant": prim_name,
-        "primary_shap_driver": primary_factor,
-        "secondary_shap_driver": secondary_factor,
         "biological_mechanism": prim_pathway["mechanism"],
         "recommended_actions": actions,
         "sensitive_groups_guidance": {k: v["impact"] for k, v in demographics.items()},
@@ -251,11 +243,11 @@ def generate_ai_summary(
     prim_val = primary_factor.get("value", "")
 
     summary = (
-        f"In {city}, the XGBoost intelligence engine predicts an Air Quality Index of {aqi_val:.1f} ({aqi_cat}) "
-        f"and an Explainable Health Impact Score of {health_score:.2f} ({risk_label}). "
-        f"SHAP TreeExplainer feature attribution proves that {prim_name} (measured at {prim_val}) is the primary risk driver "
-        f"(+{primary_factor.get('impact', 0.4):.2f} impact), followed by {sec_name} (+{secondary_factor.get('impact', 0.2):.2f} impact). "
-        f"This specific pollutant fingerprint predominantly elevates alveolar inflammatory risk for asthmatics, children, and hypertensive individuals."
+        f"In {city}, the platform projects an Air Quality Index of {aqi_val:.1f} ({aqi_cat}) "
+        f"with a Health Risk Score of {health_score:.2f} ({risk_label}). "
+        f"Environmental data indicates that {prim_name} (measured at {prim_val}) is the primary air pollutant, "
+        f"accompanied by {sec_name}. "
+        f"This specific atmospheric condition predominantly affects respiratory and cardiovascular comfort for sensitive individuals, children, and the elderly."
     )
 
     return summary

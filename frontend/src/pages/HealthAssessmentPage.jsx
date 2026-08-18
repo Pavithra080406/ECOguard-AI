@@ -4,7 +4,7 @@ import SHAPBarChart from '../components/SHAPBarChart';
 import { fetchLivePrediction, ALL_INDIA_STATES } from '../api/client';
 import {
   HeartPulse, Baby, User, Users, Activity, ShieldAlert,
-  AlertCircle, RefreshCw, CheckCircle2, ChevronRight, Stethoscope, MapPin, Cpu, Zap, Dna
+  AlertCircle, RefreshCw, CheckCircle2, Stethoscope, MapPin, Sparkles, Shield, AlertTriangle
 } from 'lucide-react';
 
 export default function HealthAssessmentPage() {
@@ -46,82 +46,75 @@ export default function HealthAssessmentPage() {
     loadHealthData(newDist, selectedState);
   };
 
-  // Extract SHAP Factors from Model
+  // Extract Key Trigger Factors from Environmental Model
   const topFactors = data?.health_prediction?.top_health_factors || [];
   const primaryFactor = topFactors[0] || { feature: 'PM2.5', importance: 0.48, value: 42.5 };
   const secondaryFactor = topFactors[1] || { feature: 'PM10', importance: 0.28, value: 78.4 };
 
   const primName = primaryFactor.feature || 'PM2.5';
   const secName = secondaryFactor.feature || 'PM10';
-  const primImpact = primaryFactor.importance || 0.48;
 
-  // Dynamic XAI demographic definitions driven by SHAP
+  // Dynamic clinical and demographic assessments
   const demographicCards = [
     {
       id: 'children',
       title: 'Infants & School Children (0–14 yrs)',
       icon: Baby,
-      color: 'emerald',
-      subtext: 'High ventilation rate (2.4x adult baseline per kg) & developing alveoli',
-      primaryDriver: `${primName} (+${primImpact.toFixed(2)} SHAP impact)`,
-      mechanism: `Explainable AI models identify ${primName} as driving acute pediatric bronchial hyper-reactivity. High airway surface-to-volume ratio causes rapid micro-particle deposition into immature bronchiolar trees.`,
-      advisory: `Limit strenuous outdoor school playground activities during peak ${primName} concentration hours. Maintain indoor classroom air filtration.`,
-      biomarker: 'Forced Expiratory Volume (FEV1) & pediatric airway resistance'
+      subtext: 'Higher respiratory frequency & developing lung capacity',
+      primaryDriver: `Leading Concern: ${primName}`,
+      mechanism: `Due to developing airway geometry and higher intake of air per kilogram of body weight, ${primName} particles penetrate deep into alveolar spaces, causing acute airway irritation, coughing, and breathing difficulty during active outdoor play.`,
+      advisory: `Avoid strenuous outdoor sports during peak traffic and high ${primName} intervals. Ensure classroom and playroom air is kept clean.`,
+      biomarker: 'Airway resistance & pediatric peak flow'
     },
     {
       id: 'commuters',
-      title: 'Adult Commuters & Outdoor Workers',
+      title: 'Adult Commuters & Daily Workers',
       icon: User,
-      color: 'sky',
-      subtext: 'High minute-ventilation volume (40–60 L/min) during outdoor transit',
-      primaryDriver: `${primName} (${primaryFactor.value ?? 'elevated'} concentration)`,
-      mechanism: `SHAP feature attribution links ${primName} and ${secName} to accelerated respiratory fatigue and pharyngeal irritation during daily street-level commute.`,
-      advisory: `Wear N95/protective respirators during arterial road transit. Shift high-intensity cardio running away from vehicular rush hours.`,
-      biomarker: 'Peak Expiratory Flow Rate (PEFR) & exercise stamina'
+      subtext: 'High physical exposure during street-level transit',
+      primaryDriver: `Leading Concern: ${primName}`,
+      mechanism: `Direct exposure to ambient ${primName} and ${secName} along busy roadways causes eye stinging, throat dryness, accelerated fatigue, and temporary reduction in lung capacity during daily transit.`,
+      advisory: `Wear high-filtration protective masks while commuting on roads or two-wheelers. Schedule outdoor fitness workouts for cleaner hours.`,
+      biomarker: 'Exertion stamina & respiratory comfort'
     },
     {
       id: 'seniors',
       title: 'Older Adults & Senior Citizens (60+ yrs)',
       icon: Users,
-      color: 'purple',
-      subtext: 'Reduced cardiopulmonary reserve & pre-existing arterial vascular stiffening',
-      primaryDriver: `${primName} (+${primImpact.toFixed(2)} SHAP attribution)`,
-      mechanism: `Model XAI highlights that ${primName} elevates systemic oxidative stress and resting systolic pressure in older adults with reduced alveolar macrophage clearance.`,
-      advisory: `Reschedule early morning outdoor walks until solar radiation disperses nocturnal inversion layers. Ensure routine cardiovascular medications are taken on time.`,
-      biomarker: 'Arterial blood pressure & resting heart rate variability (HRV)'
+      subtext: 'Reduced lung elasticity & existing cardiovascular sensitivity',
+      primaryDriver: `Leading Concern: ${primName}`,
+      mechanism: `Elevated levels of ${primName} can exacerbate shortness of breath, elevate resting blood pressure, and increase susceptibility to seasonal chest infections in older adults.`,
+      advisory: `Reschedule early morning outdoor walks to warmer, sunlit hours when ground-level pollutants disperse. Continue regular prescribed blood pressure medications.`,
+      biomarker: 'Blood pressure & resting heart rate stability'
     },
     {
       id: 'asthma',
-      title: 'Patients with Asthma & COPD',
+      title: 'Patients with Asthma & Respiratory Illness',
       icon: Stethoscope,
-      color: 'rose',
-      subtext: 'Hyper-reactive bronchial airway tree & chronic baseline inflammation',
-      primaryDriver: `${primName} (Primary Trigger Factor)`,
-      mechanism: `Explainable AI directly isolates ${primName} as the primary trigger for sudden mast-cell degranulation, mucosal edema, and acute bronchospasms.`,
-      advisory: `Keep fast-acting rescue bronchodilator inhalers accessible at all times. Operate indoor HEPA air filtration to prevent nocturnal wheezing.`,
-      biomarker: 'Daily peak expiratory flow & rescue inhaler actuation frequency'
+      subtext: 'Airway hyper-sensitivity & chronic inflammation',
+      primaryDriver: `Leading Trigger: ${primName}`,
+      mechanism: `Inhaling ${primName} and ${secName} irritates sensitive bronchial tissues, triggering rapid airway constriction, coughing spells, chest tightness, and increased reliance on inhalers.`,
+      advisory: `Keep fast-acting rescue inhalers readily accessible at all times. Use home air purifiers with HEPA filtration to maintain a clean breathing environment.`,
+      biomarker: 'Daily peak expiratory flow & inhaler usage'
     },
     {
       id: 'cardiac',
       title: 'Cardiovascular & Hypertension Patients',
       icon: Activity,
-      color: 'amber',
-      subtext: 'Systemic endothelial sensitivity & elevated myocardial workload',
-      primaryDriver: `${primName} (+${primImpact.toFixed(2)} SHAP impact)`,
-      mechanism: `Trans-alveolar passage of ${primName} stimulates autonomic sympathetic reflexes, inducing systemic microvascular vasoconstriction and elevated cardiac oxygen demand.`,
-      advisory: `Avoid sudden heavy isometric physical exertion in polluted environments. Monitor blood pressure and resting pulse closely.`,
-      biomarker: 'Endothelial flow-mediated dilation & systemic blood pressure'
+      subtext: 'Vascular sensitivity & heart workload',
+      primaryDriver: `Leading Trigger: ${primName}`,
+      mechanism: `Fine airborne particulates trigger mild blood vessel constriction, placing extra strain on the heart muscle and causing blood pressure fluctuations under current outdoor conditions.`,
+      advisory: `Avoid sudden heavy physical exertion outdoors in high-traffic zones. Monitor resting pulse and blood pressure regularly.`,
+      biomarker: 'Cardiovascular workload & resting pulse'
     },
     {
       id: 'pregnancy',
-      title: 'Expectant Mothers & Prenatal Health',
+      title: 'Expectant Mothers & Maternal Health',
       icon: HeartPulse,
-      color: 'pink',
-      subtext: 'Altered maternal hemodynamics & placental oxygen transfer dynamics',
-      primaryDriver: `${primName} (+${primImpact.toFixed(2)} SHAP impact)`,
-      mechanism: `XAI feature analysis correlates elevated ambient ${primName} with systemic maternal oxidative markers that can influence placental microcirculation.`,
-      advisory: `Prioritize clean, HEPA-filtered indoor environments during sleep and rest. Maintain adequate hydration and avoid congested commuter corridors.`,
-      biomarker: 'Maternal systemic inflammatory markers & placental perfusion'
+      subtext: 'Prenatal wellness & oxygen delivery considerations',
+      primaryDriver: `Leading Concern: ${primName}`,
+      mechanism: `Exposure to elevated ${primName} increases maternal fatigue, nasal congestion, and mild respiratory discomfort during routine daily activities.`,
+      advisory: `Spend more time in clean, well-ventilated indoor spaces. Practice gentle prenatal exercises indoors and stay well-hydrated.`,
+      biomarker: 'Maternal respiratory comfort & resting wellness'
     }
   ];
 
@@ -132,14 +125,14 @@ export default function HealthAssessmentPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2 text-xs font-semibold uppercase tracking-wider text-rose-400 mb-1">
-              <Cpu className="w-4 h-4" />
-              <span>SHAP Explainable AI (XAI) Clinical Intelligence Engine</span>
+              <Sparkles className="w-4 h-4" />
+              <span>Personalized Environmental Health Intelligence</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-100 flex items-center space-x-2">
-              <span>Demographic & Clinical Health Vulnerability Assessment</span>
+              <span>Demographic & Clinical Health Risk Assessment</span>
             </h1>
             <p className="text-xs text-slate-400 mt-1">
-              Personalized physiological risk pathways and targeted medical guidance derived dynamically from XGBoost SHAP feature attributions
+              Personalized health guidance and physiological risk profiles for different age groups and clinical conditions across all Indian states & UTs
             </p>
           </div>
 
@@ -149,7 +142,7 @@ export default function HealthAssessmentPage() {
             className="flex items-center space-x-2 bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Re-evaluate XAI Model</span>
+            <span>Update Health Assessment</span>
           </button>
         </div>
 
@@ -202,12 +195,12 @@ export default function HealthAssessmentPage() {
         <div className="glass-card p-16 rounded-3xl text-center flex flex-col items-center justify-center space-y-3">
           <RefreshCw className="w-8 h-8 text-rose-400 animate-spin" />
           <span className="text-xs text-slate-400 font-medium">
-            Computing SHAP feature attributions and clinical pathways for {selectedDistrict}, {selectedState}...
+            Analyzing environmental health risks for {selectedDistrict}, {selectedState}...
           </span>
         </div>
       ) : data ? (
         <>
-          {/* Main Health Gauges & SHAP Attribution */}
+          {/* Main Health Gauges & Pollutant Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <HealthRiskGauge
               score={data.health_prediction.health_impact_score}
@@ -217,20 +210,19 @@ export default function HealthAssessmentPage() {
             />
 
             <SHAPBarChart
-              title={`Explainable AI Risk Attribution Vector (${data.location?.city})`}
+              title={`Environmental Pollution Impact Breakdown (${data.location?.city})`}
               factors={data.health_prediction?.top_health_factors}
             />
           </div>
 
-          {/* AI Clinical Reasoning Synthesis Banner */}
-          <div className="glass-card p-6 rounded-3xl border border-purple-900/40 bg-slate-950/70 space-y-3">
-            <div className="flex items-center space-x-2 text-purple-400 font-bold text-xs uppercase tracking-wider">
-              <Dna className="w-4 h-4" />
-              <span>XAI Biological & Clinical Pathway Synthesis • {data.location?.city}, {data.location?.state}</span>
+          {/* Environmental Health Summary Banner */}
+          <div className="glass-card p-6 rounded-3xl border border-slate-800 bg-slate-950/70 space-y-3">
+            <div className="flex items-center space-x-2 text-emerald-400 font-bold text-xs uppercase tracking-wider">
+              <Shield className="w-4 h-4" />
+              <span>Environmental Health Analysis • {data.location?.city}, {data.location?.state}</span>
             </div>
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
-              The Health Impact Model uses a 28-feature XGBoost regressor with a continuous TreeExplainer.
-              For <strong>{data.location?.city}</strong>, the model isolates <strong className="text-emerald-400">{primName}</strong> (+{primImpact.toFixed(2)} SHAP score contribution) as the principal determinant of physiological vulnerability, followed by <strong className="text-sky-400">{secName}</strong>.
+              In <strong>{data.location?.city}</strong>, current atmospheric measurements show that <strong className="text-emerald-400">{primName}</strong> is the primary pollutant influencing air quality, followed by <strong className="text-sky-400">{secName}</strong>. Sensitive individuals, young children, and older citizens are advised to observe the personalized guidelines below.
             </p>
           </div>
 
@@ -239,10 +231,10 @@ export default function HealthAssessmentPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
                 <ShieldAlert className="w-5 h-5 text-amber-400" />
-                <span>Explainable Demographic & Clinical Impact Matrix ({data.location?.city})</span>
+                <span>Demographic & Clinical Health Guidance ({data.location?.city})</span>
               </h2>
-              <span className="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1 rounded-full font-mono">
-                XAI Continuous Score: <strong>{data.health_prediction?.health_impact_score} / 10</strong>
+              <span className="text-xs bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1 rounded-full font-medium">
+                Overall Risk Category: <strong className="text-emerald-400">{data.health_prediction?.risk_label}</strong>
               </span>
             </div>
 
@@ -252,7 +244,7 @@ export default function HealthAssessmentPage() {
                 return (
                   <div
                     key={card.id}
-                    className="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4 border border-slate-800 hover:border-purple-500/30 transition shadow-lg"
+                    className="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4 border border-slate-800 hover:border-slate-700 transition shadow-lg"
                   >
                     <div className="space-y-3">
                       <div className="flex items-start space-x-3">
@@ -265,11 +257,10 @@ export default function HealthAssessmentPage() {
                         </div>
                       </div>
 
-                      {/* SHAP AI Driver Badge */}
-                      <div className="bg-purple-950/40 border border-purple-800/40 px-2.5 py-1.5 rounded-xl flex items-center justify-between text-[10px]">
-                        <span className="text-purple-300 font-semibold flex items-center space-x-1">
-                          <Zap className="w-3 h-3 text-amber-400" />
-                          <span>AI Primary Driver:</span>
+                      {/* Primary Trigger Badge */}
+                      <div className="bg-slate-900 border border-slate-800 px-2.5 py-1.5 rounded-xl flex items-center justify-between text-[10px]">
+                        <span className="text-slate-300 font-semibold flex items-center space-x-1">
+                          <span>Focus Pollutant:</span>
                         </span>
                         <span className="font-mono text-emerald-400 font-bold">{card.primaryDriver}</span>
                       </div>
@@ -278,7 +269,7 @@ export default function HealthAssessmentPage() {
                       <div className="space-y-2 text-xs pt-1">
                         <div className="bg-slate-900/70 p-3 rounded-xl border border-slate-800/80 space-y-1">
                           <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
-                            Physiological XAI Pathway
+                            Physiological Health Effect
                           </span>
                           <p className="text-slate-300 text-[11px] leading-relaxed">{card.mechanism}</p>
                         </div>
@@ -286,7 +277,7 @@ export default function HealthAssessmentPage() {
                         {/* Targeted Medical Advisory */}
                         <div className="bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20 space-y-1">
                           <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block">
-                            Targeted Medical Advisory
+                            Recommended Health Action
                           </span>
                           <p className="text-emerald-200 text-[11px] leading-relaxed">{card.advisory}</p>
                         </div>
@@ -294,7 +285,7 @@ export default function HealthAssessmentPage() {
                     </div>
 
                     <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-400">
-                      <span>Clinical Focus:</span>
+                      <span>Health Focus:</span>
                       <span className="font-medium text-slate-300">{card.biomarker}</span>
                     </div>
                   </div>
