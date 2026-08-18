@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import AQIGauge from '../components/AQIGauge';
 import HealthRiskGauge from '../components/HealthRiskGauge';
 import SHAPBarChart from '../components/SHAPBarChart';
-import { fetchManualPrediction } from '../api/client';
-import { Sliders, Play, RefreshCw, AlertCircle, Sparkles } from 'lucide-react';
+import { fetchManualPrediction, ALL_INDIA_STATES } from '../api/client';
+import { Sliders, Play, RefreshCw, AlertCircle, MapPin, Wind } from 'lucide-react';
 
 export default function ManualPredictionPage() {
+  const [selectedState, setSelectedState] = useState('Tamil Nadu');
   const [form, setForm] = useState({
     pm2_5: 45.0,
     pm10: 85.0,
@@ -31,30 +32,24 @@ export default function ManualPredictionPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const indianStates = [
-    { city: 'Chennai', state: 'Tamil Nadu', pop: 7090000 },
-    { city: 'Delhi', state: 'Delhi NCT', pop: 19000000 },
-    { city: 'Mumbai', state: 'Maharashtra', pop: 12500000 },
-    { city: 'Bengaluru', state: 'Karnataka', pop: 8400000 },
-    { city: 'Kolkata', state: 'West Bengal', pop: 4500000 },
-    { city: 'Hyderabad', state: 'Telangana', pop: 6800000 },
-    { city: 'Ahmedabad', state: 'Gujarat', pop: 5600000 },
-    { city: 'Jaipur', state: 'Rajasthan', pop: 3046000 },
-    { city: 'Lucknow', state: 'Uttar Pradesh', pop: 2817000 },
-    { city: 'Kochi', state: 'Kerala', pop: 677000 },
-    { city: 'Chandigarh', state: 'Punjab', pop: 1055000 },
-  ];
+  const currentDistricts = ALL_INDIA_STATES.find(s => s.state === selectedState)?.districts || [];
+
+  const handleStateChange = (st) => {
+    setSelectedState(st);
+    const dists = ALL_INDIA_STATES.find(s => s.state === st)?.districts || [];
+    const firstCity = dists[0] || 'Delhi';
+    setForm(prev => ({
+      ...prev,
+      state: st,
+      city: firstCity
+    }));
+  };
 
   const handleCitySelect = (cityName) => {
-    const found = indianStates.find(s => s.city === cityName);
-    if (found) {
-      setForm(prev => ({
-        ...prev,
-        city: found.city,
-        state: found.state,
-        population: found.pop
-      }));
-    }
+    setForm(prev => ({
+      ...prev,
+      city: cityName
+    }));
   };
 
   const handleChange = (e) => {
@@ -81,47 +76,59 @@ export default function ManualPredictionPage() {
 
   return (
     <div className="space-y-6">
-      <div className="glass-card p-6 rounded-2xl">
-        <h1 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
-          <Sliders className="w-5 h-5 text-indigo-400" />
+      <div className="glass-card p-6 rounded-3xl border border-slate-800">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 flex items-center space-x-2">
+          <Sliders className="w-6 h-6 text-indigo-400" />
           <span>Air Quality & Health Scenario Simulator</span>
         </h1>
         <p className="text-xs text-slate-400 mt-1">
-          Adjust atmospheric and environmental parameters to forecast air quality index and projected health risk scores
+          Simulate customized environmental, weather, and pollutant parameters for any Indian State, UT, and District to forecast AQI and clinical risk score
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="glass-card p-6 rounded-2xl space-y-6">
-        {/* Location Selection */}
+      <form onSubmit={handleSubmit} className="glass-card p-6 rounded-3xl space-y-6 border border-slate-800">
+        {/* Location Selection across 28 States & 8 UTs */}
         <div>
-          <h3 className="text-xs uppercase tracking-widest text-indigo-400 font-semibold mb-3">
-            Target Indian Region
+          <h3 className="text-xs uppercase tracking-widest text-indigo-400 font-bold mb-3">
+            Target Region in India (28 States & 8 UTs)
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs text-slate-300">City Hub</label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
+                <MapPin className="w-3.5 h-3.5 text-indigo-400" />
+                <span>State / Union Territory</span>
+              </label>
+              <select
+                value={selectedState}
+                onChange={(e) => handleStateChange(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
+              >
+                {ALL_INDIA_STATES.map(s => (
+                  <option key={s.state} value={s.state}>
+                    {s.state} ({s.type === 'Union Territory' ? 'UT' : 'State'})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
+                <Wind className="w-3.5 h-3.5 text-teal-400" />
+                <span>City / District</span>
+              </label>
               <select
                 value={form.city}
                 onChange={(e) => handleCitySelect(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
               >
-                {indianStates.map(s => (
-                  <option key={s.city} value={s.city}>{s.city} ({s.state})</option>
+                {currentDistricts.map(d => (
+                  <option key={d} value={d}>{d}</option>
                 ))}
               </select>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs text-slate-300">State / Territory</label>
-              <input
-                type="text"
-                name="state"
-                value={form.state}
-                onChange={handleChange}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-slate-300">Population Density (Est.)</label>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">Population Density (Est.)</label>
               <input
                 type="number"
                 name="population"
@@ -135,7 +142,7 @@ export default function ManualPredictionPage() {
 
         {/* Pollutants Section */}
         <div>
-          <h3 className="text-xs uppercase tracking-widest text-emerald-400 font-semibold mb-3">
+          <h3 className="text-xs uppercase tracking-widest text-emerald-400 font-bold mb-3">
             Air Pollutant Concentrations (µg/m³ or mg/m³)
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -149,7 +156,7 @@ export default function ManualPredictionPage() {
               { label: 'NH3 (Ammonia)', name: 'nh3', min: 0, max: 200, step: 0.1 },
               { label: 'Pb (Lead)', name: 'pb', min: 0, max: 10, step: 0.01 },
             ].map(item => (
-              <div key={item.name} className="space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+              <div key={item.name} className="space-y-1 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
                 <div className="flex justify-between text-xs">
                   <span className="font-semibold text-slate-300">{item.label}</span>
                   <span className="font-mono text-emerald-400">{form[item.name]}</span>
@@ -171,7 +178,7 @@ export default function ManualPredictionPage() {
 
         {/* Weather Section */}
         <div>
-          <h3 className="text-xs uppercase tracking-widest text-sky-400 font-semibold mb-3">
+          <h3 className="text-xs uppercase tracking-widest text-sky-400 font-bold mb-3">
             Atmospheric & Meteorological Conditions
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -184,7 +191,7 @@ export default function ManualPredictionPage() {
               { label: 'Rainfall (mm)', name: 'rainfall', min: 0, max: 200, step: 0.1 },
               { label: 'Cloud Cover (%)', name: 'cloud_cover', min: 0, max: 100, step: 1 },
             ].map(item => (
-              <div key={item.name} className="space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+              <div key={item.name} className="space-y-1 bg-slate-900/60 p-3 rounded-2xl border border-slate-800">
                 <div className="flex justify-between text-xs">
                   <span className="font-semibold text-slate-300">{item.label}</span>
                   <span className="font-mono text-sky-400">{form[item.name]}</span>
@@ -207,24 +214,24 @@ export default function ManualPredictionPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2"
+          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3.5 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-2"
         >
           {loading ? (
             <>
-              <RefreshCw className="w-5 h-5 animate-spin" />
-              <span>Simulating Environmental Forecast...</span>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span>Simulating Environmental Forecast for {form.city}, {form.state}...</span>
             </>
           ) : (
             <>
-              <Play className="w-5 h-5 fill-current" />
-              <span>Run Scenario Simulation</span>
+              <Play className="w-4 h-4 fill-current" />
+              <span>Run Scenario Simulation for {form.city}</span>
             </>
           )}
         </button>
       </form>
 
       {error && (
-        <div className="glass-card p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-300 flex items-center space-x-2 text-xs">
+        <div className="glass-card p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 text-rose-300 flex items-center space-x-2 text-xs">
           <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
           <span>{error}</span>
         </div>
@@ -232,7 +239,9 @@ export default function ManualPredictionPage() {
 
       {result && (
         <div className="space-y-6 pt-4 border-t border-slate-800">
-          <h2 className="text-base font-bold text-slate-100">Scenario Simulation Forecast Output</h2>
+          <h2 className="text-base font-bold text-slate-100">
+            Scenario Simulation Forecast Output ({form.city}, {form.state})
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <AQIGauge
               aqi={result.aqi_prediction.predicted_aqi}
@@ -250,7 +259,7 @@ export default function ManualPredictionPage() {
           </div>
 
           <SHAPBarChart
-            title="Simulated Environmental Risk Contribution Factors"
+            title={`Simulated Risk Factors Attribution (${form.city})`}
             factors={result.health_prediction.top_health_factors}
           />
         </div>

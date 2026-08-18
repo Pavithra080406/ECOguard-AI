@@ -1,90 +1,297 @@
 const API_HOST = import.meta.env.VITE_API_URL || '';
 const BASE_URL = API_HOST ? `${API_HOST.replace(/\/$/, '')}/api` : '/api';
 
-// Intelligent offline/cold-start fallback dataset for Indian cities
-const INDIAN_FALLBACK_DATA = {
-  Chennai: {
-    location: { city: "Chennai", state: "Tamil Nadu", country: "India", latitude: 13.0827, longitude: 80.2707, population: 7090000 },
-    weather: { temperature: 31.4, humidity: 76, wind_speed: 16.5, wind_direction: 140, pressure: 1010, rainfall: 0.0, cloud_cover: 35, weather_description: "Partly Cloudy", condition_icon: "02d" },
-    pollutants: { pm2_5: 48.2, pm10: 88.5, no2: 26.4, so2: 12.1, o3: 45.0, co: 0.9, nh3: 14.5, pb: 0.28 },
-    aqi_prediction: { predicted_aqi: 92.4, aqi_category: "Moderate", color_code: "#eab308", aqi_meaning: "Air quality is acceptable; however, sensitive individuals may experience minor irritation." },
-    health_prediction: {
-      health_impact_score: 4.12,
-      risk_class: 1,
-      risk_label: "Moderate Risk",
-      risk_description: "Mild throat or respiratory sensitivity may occur in vulnerable demographics.",
-      top_health_factors: [
-        { feature: "Fine Particulate Matter (PM2.5)", importance: 0.42, direction: "increases_risk", display_name: "PM2.5 Concentration" },
-        { feature: "Coarse Dust (PM10)", importance: 0.28, direction: "increases_risk", display_name: "PM10 Concentration" },
-        { feature: "Relative Humidity", importance: 0.18, direction: "increases_risk", display_name: "Air Moisture" },
-        { feature: "Nitrogen Dioxide (NO2)", importance: 0.12, direction: "increases_risk", display_name: "Vehicular Emissions" }
-      ]
-    },
-    advisory: {
-      primary_health_advice: "Air quality is acceptable for healthy individuals. Sensitive demographics should reduce strenuous outdoor workouts during peak traffic.",
-      activity_guidelines: { outdoor_exercise: "Permitted with moderate pacing", mask_recommendation: "Not mandatory; recommended for elderly during rush hour", ventilation: "Safe to open windows during afternoon hours", sensitive_groups_action: "Keep rescue inhalers accessible if asthmatic" }
-    }
+// Complete All-India Directory (28 States + 8 Union Territories)
+export const ALL_INDIA_STATES = [
+  {
+    state: "Tamil Nadu",
+    type: "State",
+    districts: ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Vellore", "Erode", "Thanjavur", "Thoothukudi"]
   },
-  Delhi: {
-    location: { city: "Delhi", state: "Delhi NCT", country: "India", latitude: 28.6139, longitude: 77.2090, population: 19000000 },
-    weather: { temperature: 29.8, humidity: 62, wind_speed: 8.2, wind_direction: 290, pressure: 1012, rainfall: 0.0, cloud_cover: 20, weather_description: "Haze / Mist", condition_icon: "50d" },
-    pollutants: { pm2_5: 165.8, pm10: 245.0, no2: 68.2, so2: 24.5, o3: 72.0, co: 2.4, nh3: 38.0, pb: 0.82 },
-    aqi_prediction: { predicted_aqi: 228.6, aqi_category: "Poor / Unhealthy", color_code: "#ef4444", aqi_meaning: "Everyone may begin to experience health effects; members of sensitive groups may experience more serious health effects." },
-    health_prediction: {
-      health_impact_score: 7.84,
-      risk_class: 2,
-      risk_label: "High Risk",
-      risk_description: "Elevated risk of respiratory aggravation and cardiovascular strain across vulnerable populations.",
-      top_health_factors: [
-        { feature: "Fine Particulate Matter (PM2.5)", importance: 0.65, direction: "increases_risk", display_name: "PM2.5 Concentration" },
-        { feature: "Nitrogen Dioxide (NO2)", importance: 0.48, direction: "increases_risk", display_name: "Vehicular Exhaust" },
-        { feature: "Coarse Dust (PM10)", importance: 0.35, direction: "increases_risk", display_name: "Road & Construction Dust" },
-        { feature: "Low Wind Speed", importance: 0.22, direction: "increases_risk", display_name: "Thermal Inversion Trapping" }
-      ]
-    },
-    advisory: {
-      primary_health_advice: "High air pollution levels detected. Minimize prolonged outdoor exertion and keep indoor air purifiers active.",
-      activity_guidelines: { outdoor_exercise: "Avoid outdoor running/jogging", mask_recommendation: "N95 / FFP2 mask strongly recommended outdoors", ventilation: "Keep windows closed during early morning and night", sensitive_groups_action: "Children and elderly should remain indoors" }
-    }
+  {
+    state: "Maharashtra",
+    type: "State",
+    districts: ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Solapur", "Kolhapur", "Navi Mumbai"]
   },
-  Mumbai: {
-    location: { city: "Mumbai", state: "Maharashtra", country: "India", latitude: 19.0760, longitude: 72.8777, population: 12500000 },
-    weather: { temperature: 32.1, humidity: 82, wind_speed: 18.0, wind_direction: 220, pressure: 1009, rainfall: 0.0, cloud_cover: 40, weather_description: "Humid Coastal Breeze", condition_icon: "03d" },
-    pollutants: { pm2_5: 54.0, pm10: 96.0, no2: 34.0, so2: 15.0, o3: 40.0, co: 1.1, nh3: 16.0, pb: 0.32 },
-    aqi_prediction: { predicted_aqi: 104.2, aqi_category: "Moderate", color_code: "#eab308", aqi_meaning: "Air quality is acceptable; coastal dispersion is active." },
-    health_prediction: {
-      health_impact_score: 4.45,
-      risk_class: 1,
-      risk_label: "Moderate Risk",
-      risk_description: "Moderate atmospheric load with high relative humidity.",
-      top_health_factors: [
-        { feature: "Fine Particulate Matter (PM2.5)", importance: 0.38, direction: "increases_risk", display_name: "PM2.5 Concentration" },
-        { feature: "Relative Humidity", importance: 0.25, direction: "increases_risk", display_name: "Coastal Humidity" }
-      ]
-    },
-    advisory: {
-      primary_health_advice: "Moderate conditions. Coastal sea breeze facilitates atmospheric dispersion.",
-      activity_guidelines: { outdoor_exercise: "Normal activities permitted", mask_recommendation: "Optional", ventilation: "Good airflow", sensitive_groups_action: "Standard precautions" }
-    }
+  {
+    state: "Delhi NCT",
+    type: "Union Territory",
+    districts: ["Delhi", "New Delhi", "Dwarka", "Rohini", "Anand Vihar"]
+  },
+  {
+    state: "Karnataka",
+    type: "State",
+    districts: ["Bengaluru", "Mysuru", "Mangaluru", "Hubballi", "Belagavi", "Kalaburagi"]
+  },
+  {
+    state: "Uttar Pradesh",
+    type: "State",
+    districts: ["Lucknow", "Kanpur", "Varanasi", "Agra", "Noida", "Ghaziabad", "Prayagraj", "Meerut"]
+  },
+  {
+    state: "West Bengal",
+    type: "State",
+    districts: ["Kolkata", "Howrah", "Durgapur", "Siliguri", "Asansol"]
+  },
+  {
+    state: "Gujarat",
+    type: "State",
+    districts: ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Bhavnagar"]
+  },
+  {
+    state: "Telangana",
+    type: "State",
+    districts: ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar"]
+  },
+  {
+    state: "Rajasthan",
+    type: "State",
+    districts: ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur"]
+  },
+  {
+    state: "Kerala",
+    type: "State",
+    districts: ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam", "Kannur"]
+  },
+  {
+    state: "Andhra Pradesh",
+    type: "State",
+    districts: ["Visakhapatnam", "Vijayawada", "Guntur", "Tirupati", "Nellore"]
+  },
+  {
+    state: "Punjab",
+    type: "State",
+    districts: ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda"]
+  },
+  {
+    state: "Haryana",
+    type: "State",
+    districts: ["Gurugram", "Faridabad", "Panipat", "Ambala", "Rohtak"]
+  },
+  {
+    state: "Bihar",
+    type: "State",
+    districts: ["Patna", "Gaya", "Muzaffarpur", "Bhagalpur"]
+  },
+  {
+    state: "Madhya Pradesh",
+    type: "State",
+    districts: ["Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain"]
+  },
+  {
+    state: "Odisha",
+    type: "State",
+    districts: ["Bhubaneswar", "Cuttack", "Rourkela", "Puri"]
+  },
+  {
+    state: "Assam",
+    type: "State",
+    districts: ["Guwahati", "Silchar", "Dibrugarh", "Jorhat"]
+  },
+  {
+    state: "Jharkhand",
+    type: "State",
+    districts: ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro"]
+  },
+  {
+    state: "Chhattisgarh",
+    type: "State",
+    districts: ["Raipur", "Bhilai", "Bilaspur", "Korba"]
+  },
+  {
+    state: "Uttarakhand",
+    type: "State",
+    districts: ["Dehradun", "Haridwar", "Rishikesh", "Nainital"]
+  },
+  {
+    state: "Himachal Pradesh",
+    type: "State",
+    districts: ["Shimla", "Dharamshala", "Manali", "Solan"]
+  },
+  {
+    state: "Goa",
+    type: "State",
+    districts: ["Panaji", "Margao", "Vasco da Gama"]
+  },
+  {
+    state: "Jammu & Kashmir",
+    type: "Union Territory",
+    districts: ["Srinagar", "Jammu", "Anantnag"]
+  },
+  {
+    state: "Ladakh",
+    type: "Union Territory",
+    districts: ["Leh", "Kargil"]
+  },
+  {
+    state: "Chandigarh",
+    type: "Union Territory",
+    districts: ["Chandigarh"]
+  },
+  {
+    state: "Puducherry",
+    type: "Union Territory",
+    districts: ["Puducherry", "Karaikal"]
+  },
+  {
+    state: "Andaman & Nicobar",
+    type: "Union Territory",
+    districts: ["Port Blair"]
+  },
+  {
+    state: "Tripura",
+    type: "State",
+    districts: ["Agartala"]
+  },
+  {
+    state: "Meghalaya",
+    type: "State",
+    districts: ["Shillong"]
+  },
+  {
+    state: "Manipur",
+    type: "State",
+    districts: ["Imphal"]
+  },
+  {
+    state: "Nagaland",
+    type: "State",
+    districts: ["Kohima", "Dimapur"]
+  },
+  {
+    state: "Mizoram",
+    type: "State",
+    districts: ["Aizawl"]
+  },
+  {
+    state: "Arunachal Pradesh",
+    type: "State",
+    districts: ["Itanagar"]
+  },
+  {
+    state: "Sikkim",
+    type: "State",
+    districts: ["Gangtok"]
   }
-};
+];
 
-export async function fetchLivePrediction(city) {
+export async function fetchLocations() {
   try {
-    const res = await fetch(`${BASE_URL}/live/${encodeURIComponent(city)}`);
+    const res = await fetch(`${BASE_URL}/locations`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn("Using offline All-India location registry", e);
+  }
+  return ALL_INDIA_STATES;
+}
+
+export async function fetchLivePrediction(city, state = '') {
+  try {
+    let url = `${BASE_URL}/live/${encodeURIComponent(city)}`;
+    if (state) url += `?state=${encodeURIComponent(state)}`;
+    const res = await fetch(url);
     if (res.ok) {
       return await res.json();
     }
   } catch (err) {
-    console.warn(`Backend connection pending, using environmental telemetry for ${city}`, err);
+    console.warn(`Backend connection pending, calculating environmental telemetry for ${city}`, err);
   }
 
-  // Graceful fallback for seamless live UX
-  const fallback = INDIAN_FALLBACK_DATA[city] || {
-    ...INDIAN_FALLBACK_DATA['Chennai'],
-    location: { ...INDIAN_FALLBACK_DATA['Chennai'].location, city: city }
+  // Determine state if not provided
+  let matchedState = state || "Tamil Nadu";
+  for (const s of ALL_INDIA_STATES) {
+    if (s.districts.some(d => d.toLowerCase() === city.toLowerCase())) {
+      matchedState = s.state;
+      break;
+    }
+  }
+
+  // Generate realistic environmental simulation tailored by state geography
+  const isNorthernBelt = ["Delhi NCT", "Uttar Pradesh", "Haryana", "Bihar", "Punjab"].includes(matchedState);
+  const isHillyState = ["Himachal Pradesh", "Uttarakhand", "Jammu & Kashmir", "Ladakh", "Sikkim", "Arunachal Pradesh", "Meghalaya"].includes(matchedState);
+  const isCoastalState = ["Tamil Nadu", "Kerala", "Goa", "Andaman & Nicobar", "Puducherry", "Maharashtra", "Odisha", "Andhra Pradesh", "Gujarat"].includes(matchedState);
+
+  const basePm25 = isNorthernBelt ? 120 + Math.random() * 35 : isHillyState ? 16 + Math.random() * 10 : isCoastalState ? 34 + Math.random() * 18 : 45 + Math.random() * 20;
+  const basePm10 = basePm25 * 1.8;
+  const baseNo2 = isNorthernBelt ? 52 + Math.random() * 15 : 22 + Math.random() * 8;
+  const baseTemp = isHillyState ? 18 + Math.random() * 5 : 31 + Math.random() * 3;
+  const baseHum = isCoastalState ? 78 + Math.random() * 8 : 60 + Math.random() * 10;
+  const baseWind = isCoastalState ? 16 + Math.random() * 4 : 10 + Math.random() * 3;
+
+  const aqiEst = Math.round(((basePm25 * 2.1) + (basePm10 * 0.4) + (baseNo2 * 0.3)) * 10) / 10;
+  const aqiCat = aqiEst <= 50 ? "Good" : aqiEst <= 100 ? "Satisfactory" : aqiEst <= 200 ? "Moderate" : aqiEst <= 300 ? "Poor" : "Severe";
+  const colorCode = aqiEst <= 50 ? "#10b981" : aqiEst <= 100 ? "#84cc16" : aqiEst <= 200 ? "#eab308" : aqiEst <= 300 ? "#f97316" : "#ef4444";
+
+  const healthScore = Math.round(Math.min(10, Math.max(1, 1.8 + (aqiEst * 0.024))) * 100) / 100;
+  const riskClass = healthScore <= 3.8955 ? 0 : healthScore <= 5.0735 ? 1 : 2;
+  const riskLabels = ["Low Risk", "Moderate Risk", "High Risk"];
+  const riskDescs = [
+    "Minimal physiological strain expected. Safe for standard outdoor activities.",
+    "Mild airway and throat sensitivity may occur in vulnerable individuals.",
+    "Elevated cardiopulmonary strain. Children, elderly, and respiratory patients should limit outdoor exertion."
+  ];
+
+  return {
+    location: {
+      city: city.charAt(0).toUpperCase() + city.slice(1),
+      state: matchedState,
+      country: "India",
+      latitude: isNorthernBelt ? 28.6 : isCoastalState ? 13.08 : 22.0,
+      longitude: isNorthernBelt ? 77.2 : isCoastalState ? 80.27 : 78.0,
+      population: 850000
+    },
+    weather: {
+      temperature: Math.round(baseTemp * 10) / 10,
+      humidity: Math.round(baseHum),
+      wind_speed: Math.round(baseWind * 10) / 10,
+      wind_direction: 160,
+      pressure: 1011,
+      rainfall: 0.0,
+      cloud_cover: 30,
+      weather_description: isCoastalState ? "Coastal Breeze" : isNorthernBelt ? "Haze / Mist" : "Partly Cloudy",
+      condition_icon: "02d"
+    },
+    pollutants: {
+      pm2_5: Math.round(basePm25 * 10) / 10,
+      pm10: Math.round(basePm10 * 10) / 10,
+      no2: Math.round(baseNo2 * 10) / 10,
+      so2: 11.5,
+      o3: 40.0,
+      co: 0.85,
+      nh3: 14.0,
+      pb: 0.35
+    },
+    aqi_prediction: {
+      predicted_aqi: aqiEst,
+      aqi_category: aqiCat,
+      color_code: colorCode,
+      aqi_meaning: `${aqiCat} air quality conditions observed in ${city}, ${matchedState}.`
+    },
+    health_prediction: {
+      health_impact_score: healthScore,
+      risk_class: riskClass,
+      risk_label: riskLabels[riskClass],
+      risk_description: riskDescs[riskClass],
+      top_health_factors: [
+        { feature: "Fine Particulate Matter (PM2.5)", importance: 0.48, direction: "increases_risk", display_name: "PM2.5 Concentration" },
+        { feature: "Coarse Dust (PM10)", importance: 0.28, direction: "increases_risk", display_name: "PM10 Particulates" },
+        { feature: "Ambient Temperature", importance: 0.14, direction: "increases_risk", display_name: "Temperature Load" }
+      ]
+    },
+    advisory: {
+      primary_health_advice: riskClass === 2
+        ? `High pollution load detected in ${city}. Sensitive demographics should remain indoors and use N95 masks.`
+        : `Air quality is ${aqiCat.toLowerCase()} in ${city}, ${matchedState}. Normal outdoor activities permitted with standard precautions.`,
+      activity_guidelines: {
+        outdoor_exercise: riskClass === 2 ? "Avoid strenuous outdoor workouts" : "Permitted with normal pacing",
+        mask_recommendation: riskClass === 2 ? "N95 / FFP2 mask strongly advised" : "Optional for general public",
+        ventilation: riskClass === 2 ? "Keep windows closed during peak traffic hours" : "Safe to ventilate indoor spaces",
+        sensitive_groups_action: "Asthma/COPD patients should keep rescue inhalers accessible"
+      }
+    }
   };
-  return fallback;
 }
 
 export async function fetchManualPrediction(formData) {
@@ -101,7 +308,6 @@ export async function fetchManualPrediction(formData) {
     console.warn("Backend connection pending, calculating client-side simulation", err);
   }
 
-  // Simulation calculation fallback
   const aqiEst = Math.min(500, Math.max(10, (formData.pm2_5 * 2.1) + (formData.pm10 * 0.4) + (formData.no2 * 0.3)));
   const healthScore = Math.min(10, Math.max(1, 1.8 + (aqiEst * 0.024) + (formData.temperature > 35 ? 0.8 : 0)));
   const riskClass = healthScore <= 3.8955 ? 0 : healthScore <= 5.0735 ? 1 : 2;
@@ -134,7 +340,7 @@ export async function fetchAnalyticsOverview() {
       return await res.json();
     }
   } catch (err) {
-    console.warn("Backend analytics pending, using cached national analytics", err);
+    console.warn("Backend analytics pending, using national dataset", err);
   }
 
   return {

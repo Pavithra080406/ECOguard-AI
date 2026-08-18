@@ -2,13 +2,18 @@ import uuid
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Query
 from app.schemas import FullPredictionResponse, LivePredictionRequest, ManualPredictionRequest
-from app.live_data import get_live_environmental_data
+from app.live_data import get_live_environmental_data, get_all_indian_directory
 from app.predictor import predictor
 from app.xai import xai
 from app.advisory import generate_health_advisory, generate_ai_summary
 from app.database import db
 
 router = APIRouter(prefix="/api", tags=["Full Prediction Pipeline"])
+
+@router.get("/locations")
+def get_locations():
+    """Returns the comprehensive All-India directory of 28 States and 8 Union Territories with districts."""
+    return get_all_indian_directory()
 
 def execute_pipeline(env_data: dict, prediction_type: str = "LIVE") -> dict:
     pred_id = f"pred_{uuid.uuid4().hex[:10]}"
@@ -92,9 +97,9 @@ def execute_pipeline(env_data: dict, prediction_type: str = "LIVE") -> dict:
     return record
 
 @router.get("/live/{city}", response_model=FullPredictionResponse)
-def get_live_prediction_by_city(city: str):
+def get_live_prediction_by_city(city: str, state: str = None):
     try:
-        env_data = get_live_environmental_data(city)
+        env_data = get_live_environmental_data(city, state)
         return execute_pipeline(env_data, prediction_type="LIVE")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Live prediction error for {city}: {str(e)}")

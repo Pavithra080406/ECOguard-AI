@@ -1,53 +1,214 @@
 import React, { useState, useEffect } from 'react';
 import HealthRiskGauge from '../components/HealthRiskGauge';
 import SHAPBarChart from '../components/SHAPBarChart';
-import { fetchLivePrediction } from '../api/client';
-import { HeartPulse, Users, ShieldAlert, CheckCircle2, Info, Baby, Activity, UserCheck, Stethoscope, AlertTriangle } from 'lucide-react';
+import { fetchLivePrediction, ALL_INDIA_STATES } from '../api/client';
+import {
+  HeartPulse, Baby, User, Users, Activity, ShieldAlert,
+  AlertCircle, RefreshCw, CheckCircle2, ChevronRight, Stethoscope, MapPin
+} from 'lucide-react';
 
 export default function HealthAssessmentPage() {
-  const [city, setCity] = useState('Chennai');
+  const [selectedState, setSelectedState] = useState('Tamil Nadu');
+  const [selectedDistrict, setSelectedDistrict] = useState('Chennai');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const currentDistricts = ALL_INDIA_STATES.find(s => s.state === selectedState)?.districts || [];
+
+  const loadHealthData = async (city, state) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetchLivePrediction(city, state);
+      setData(res);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setLoading(true);
-    fetchLivePrediction(city)
-      .then(setData)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [city]);
+    loadHealthData(selectedDistrict, selectedState);
+  }, []);
 
-  const indianCities = [
-    'Chennai', 'Delhi', 'Mumbai', 'Bengaluru', 'Kolkata', 'Hyderabad',
-    'Ahmedabad', 'Pune', 'Jaipur', 'Lucknow', 'Chandigarh', 'Kochi', 'Patna', 'Bhopal'
+  const handleStateChange = (newState) => {
+    setSelectedState(newState);
+    const dists = ALL_INDIA_STATES.find(s => s.state === newState)?.districts || [];
+    const first = dists[0] || 'Delhi';
+    setSelectedDistrict(first);
+    loadHealthData(first, newState);
+  };
+
+  const handleDistrictChange = (newDist) => {
+    setSelectedDistrict(newDist);
+    loadHealthData(newDist, selectedState);
+  };
+
+  const riskClass = data?.health_prediction?.risk_class ?? 1;
+
+  const demographicImpacts = [
+    {
+      title: "Children & Infants (0–14 yrs)",
+      icon: Baby,
+      color: "emerald",
+      physiology: "Higher ventilation rate per body weight & developing respiratory airways.",
+      riskLevel: riskClass === 2 ? "High Alert" : riskClass === 1 ? "Moderate Caution" : "Low Risk",
+      impact: riskClass === 2
+        ? "Micro-particles (PM2.5) penetrate deep alveolar regions causing acute airway inflammation and wheezing."
+        : "Minor susceptibility during strenuous playground activities; normal baseline precautions.",
+      advisory: riskClass === 2
+        ? "Limit outdoor morning activities; avoid outdoor school sports and keep indoor air purified."
+        : "Encourage active hydration and avoid prolonged play near heavy traffic corridors."
+    },
+    {
+      title: "Adults & Daily Commuters",
+      icon: User,
+      color: "sky",
+      physiology: "Extended exposure to vehicular NOx, diesel particulate matter, and ozone.",
+      riskLevel: riskClass === 2 ? "Elevated Strain" : riskClass === 1 ? "Mild Irritation" : "Nominal Risk",
+      impact: riskClass === 2
+        ? "Throat irritation, reduced lung volume, fatigue, and headaches during peak commuter hours."
+        : "Standard tolerance; slight dryness or fatigue on heavily congested arterial roads.",
+      advisory: riskClass === 2
+        ? "Wear an N95 mask while commuting on two-wheelers or open transit; schedule runs for afternoon hours."
+        : "Stay hydrated and use public transit or carpooling where possible."
+    },
+    {
+      title: "Senior Citizens (60+ yrs)",
+      icon: Users,
+      color: "purple",
+      physiology: "Reduced cardiopulmonary reserve and pre-existing vascular stiffening.",
+      riskLevel: riskClass === 2 ? "Critical Precaution" : riskClass === 1 ? "Moderate Alert" : "Safe",
+      impact: riskClass === 2
+        ? "Increased arterial blood pressure, elevated arrhythmia risk, and exacerbated dyspnea."
+        : "Mild fatigue during morning walks; manageable with leisurely pacing.",
+      advisory: riskClass === 2
+        ? "Postpone early morning walks until sunlight disperses ground inversion layers; stay indoors."
+        : "Opt for afternoon walks; maintain regular prescribed blood pressure medications."
+    },
+    {
+      title: "Asthma & Respiratory Illness (COPD)",
+      icon: Stethoscope,
+      color: "rose",
+      physiology: "Hyper-reactive bronchial airways triggered by PM2.5, SO2, and ground ozone.",
+      riskLevel: riskClass === 2 ? "Severe Risk" : riskClass === 1 ? "Moderate Sensitivity" : "Controlled",
+      impact: riskClass === 2
+        ? "Acute bronchospasm, frequent coughing fits, reduced peak flow, and increased rescue inhaler reliance."
+        : "Intermittent chest tightness; potential reaction to sudden cold air or construction dust.",
+      advisory: riskClass === 2
+        ? "Keep fast-acting bronchodilator inhalers accessible at all times; use HEPA air purifiers indoors."
+        : "Monitor peak flow numbers and avoid dusty environments or incense smoke."
+    },
+    {
+      title: "Cardiovascular & Hypertension Patients",
+      icon: Activity,
+      color: "amber",
+      physiology: "Systemic vascular inflammation, platelet activation, and autonomic nervous strain.",
+      riskLevel: riskClass === 2 ? "High Alert" : riskClass === 1 ? "Moderate Caution" : "Low Risk",
+      impact: riskClass === 2
+        ? "Elevated myocardial oxygen demand, autonomic imbalance, and increased ischemic event susceptibility."
+        : "Minor endothelial stress; minimal risk under rested baseline conditions.",
+      advisory: riskClass === 2
+        ? "Avoid strenuous physical exertion; monitor resting pulse and blood pressure closely."
+        : "Continue prescribed cardioprotective regimens and maintain healthy hydration."
+    },
+    {
+      title: "Expectant Mothers",
+      icon: HeartPulse,
+      color: "pink",
+      physiology: "Altered maternal hemodynamic state & transplacental particle transfer considerations.",
+      riskLevel: riskClass === 2 ? "High Precaution" : riskClass === 1 ? "Moderate Alert" : "Normal",
+      impact: riskClass === 2
+        ? "Oxidative stress and potential systemic inflammatory response impacting maternal well-being."
+        : "Standard physiological adaptations; minimal acute adverse triggers.",
+      advisory: riskClass === 2
+        ? "Avoid outdoor transit during rush hours; practice indoor prenatal yoga and breathing exercises."
+        : "Maintain adequate indoor air circulation and stay well-hydrated."
+    }
   ];
 
   return (
     <div className="space-y-6">
-      <div className="glass-card p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
-            <HeartPulse className="w-5 h-5 text-rose-400" />
-            <span>Health Risk & Clinical Vulnerability Assessment</span>
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Demographic impact analysis, age-specific risks, and guidance for respiratory and cardiovascular conditions
-          </p>
+      {/* Header & State/District Selector */}
+      <div className="glass-card p-6 rounded-3xl border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-100 flex items-center space-x-2">
+              <HeartPulse className="w-6 h-6 text-rose-400" />
+              <span>Demographic & Clinical Health Vulnerability Risk Engine</span>
+            </h1>
+            <p className="text-xs text-slate-400 mt-1">
+              Physiological risk profiling and medical advisories for all age groups and sensitive clinical conditions across all Indian states & UTs
+            </p>
+          </div>
+
+          <button
+            onClick={() => loadHealthData(selectedDistrict, selectedState)}
+            disabled={loading}
+            className="flex items-center space-x-2 bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold transition"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Re-evaluate Risks</span>
+          </button>
         </div>
 
-        <select
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm font-medium text-slate-100 focus:outline-none focus:border-rose-500 w-full md:w-56"
-        >
-          {indianCities.map(c => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+        {/* Dual Hierarchy State & District Selector */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-5 border-t border-slate-800/80">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
+              <MapPin className="w-3.5 h-3.5 text-rose-400" />
+              <span>State / Union Territory</span>
+            </label>
+            <select
+              value={selectedState}
+              onChange={(e) => handleStateChange(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-rose-500"
+            >
+              {ALL_INDIA_STATES.map(s => (
+                <option key={s.state} value={s.state}>
+                  {s.state} ({s.type === 'Union Territory' ? 'UT' : 'State'})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300 flex items-center space-x-1.5">
+              <Activity className="w-3.5 h-3.5 text-pink-400" />
+              <span>City / District</span>
+            </label>
+            <select
+              value={selectedDistrict}
+              onChange={(e) => handleDistrictChange(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-pink-500"
+            >
+              {currentDistricts.map(d => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
-      {!loading && data && (
+      {error && (
+        <div className="glass-card p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 text-rose-300 flex items-center space-x-2 text-xs">
+          <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="glass-card p-16 rounded-3xl text-center flex flex-col items-center justify-center space-y-3">
+          <RefreshCw className="w-8 h-8 text-rose-400 animate-spin" />
+          <span className="text-xs text-slate-400 font-medium">
+            Computing clinical demographic risk pathways for {selectedDistrict}, {selectedState}...
+          </span>
+        </div>
+      ) : data ? (
         <>
+          {/* Main Health Gauges and SHAP */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <HealthRiskGauge
               score={data.health_prediction.health_impact_score}
@@ -56,148 +217,68 @@ export default function HealthAssessmentPage() {
               riskDesc={data.health_prediction.risk_description}
             />
 
-            {/* Health Risk Level Scale */}
-            <div className="glass-card p-6 rounded-2xl space-y-3 flex flex-col justify-between">
-              <div className="flex items-center space-x-2 text-xs uppercase tracking-wider font-semibold text-slate-300">
-                <Info className="w-4 h-4 text-sky-400" />
-                <span>Health Risk Level Thresholds</span>
-              </div>
-              <div className="space-y-2 text-xs">
-                <div className={`p-3 rounded-xl border flex justify-between items-center ${
-                  data.health_prediction.risk_class === 0 ? 'bg-emerald-500/20 border-emerald-500' : 'bg-emerald-500/10 border-emerald-500/30'
-                }`}>
-                  <div>
-                    <span className="font-bold text-emerald-400">Low Risk (Score ≤ 3.9)</span>
-                    <p className="text-[11px] text-slate-400">Normal healthy conditions. Minimal physiological strain on population.</p>
-                  </div>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-mono">Clean Air</span>
-                </div>
-
-                <div className={`p-3 rounded-xl border flex justify-between items-center ${
-                  data.health_prediction.risk_class === 1 ? 'bg-amber-500/20 border-amber-500' : 'bg-amber-500/10 border-amber-500/30'
-                }`}>
-                  <div>
-                    <span className="font-bold text-amber-400">Moderate Risk (Score 3.9 – 5.1)</span>
-                    <p className="text-[11px] text-slate-400">Mild to moderate irritation for sensitive individuals; monitor symptoms.</p>
-                  </div>
-                  <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-mono">Caution</span>
-                </div>
-
-                <div className={`p-3 rounded-xl border flex justify-between items-center ${
-                  data.health_prediction.risk_class === 2 ? 'bg-rose-500/20 border-rose-500' : 'bg-rose-500/10 border-rose-500/30'
-                }`}>
-                  <div>
-                    <span className="font-bold text-rose-400">High Risk (Score &gt; 5.1)</span>
-                    <p className="text-[11px] text-slate-400">Acute risk of exacerbation for respiratory and cardiovascular sufferers.</p>
-                  </div>
-                  <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-full font-mono">High Risk</span>
-                </div>
-              </div>
-            </div>
+            <SHAPBarChart
+              title={`Clinical Risk Attribution Factors (${data.location?.city}, ${data.location?.state})`}
+              factors={data.health_prediction?.top_health_factors}
+            />
           </div>
 
-          {/* Deep Demographic & Clinical Vulnerability Section */}
+          {/* Demographic & Clinical Vulnerability Cards Grid */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Users className="w-5 h-5 text-purple-400" />
-              <h2 className="text-base font-bold text-slate-100 uppercase tracking-wider">
-                Vulnerability Breakdown by Age Group & Medical Conditions
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
+                <ShieldAlert className="w-5 h-5 text-amber-400" />
+                <span>Targeted Demographic & Clinical Vulnerability Matrix ({data.location?.city})</span>
               </h2>
+              <span className="text-xs text-slate-400">
+                Live Status: <strong className="text-slate-200">{data.health_prediction?.risk_label}</strong>
+              </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Children */}
-              <div className="glass-card p-5 rounded-2xl border-l-4 border-l-sky-400 space-y-2">
-                <div className="flex items-center space-x-2 text-sky-400">
-                  <Baby className="w-5 h-5" />
-                  <h3 className="font-bold text-sm text-slate-100">Children & Infants (0–14 yrs)</h3>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Children breathe faster per kg of body weight. Fine particulate matter penetrates deeper into developing bronchial tubes, increasing risks of coughing, wheezing, and childhood asthma flare-ups.
-                </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                  <strong className="text-sky-300">Action:</strong> Limit intense outdoor school sports during peak traffic hours.
-                </div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {demographicImpacts.map((card, idx) => {
+                const Icon = card.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4 border border-slate-800 hover:border-slate-700 transition"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
+                            <Icon className="w-5 h-5 text-rose-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-xs font-bold text-slate-100">{card.title}</h3>
+                            <span className="text-[10px] text-slate-400 block">{card.physiology}</span>
+                          </div>
+                        </div>
+                      </div>
 
-              {/* Adults & Commuters */}
-              <div className="glass-card p-5 rounded-2xl border-l-4 border-l-emerald-400 space-y-2">
-                <div className="flex items-center space-x-2 text-emerald-400">
-                  <UserCheck className="w-5 h-5" />
-                  <h3 className="font-bold text-sm text-slate-100">Adults & Outdoor Workers</h3>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Daily commuters and outdoor physical workers experience throat irritation, eye stinging, reduced endurance, and fatigue from elevated NO2 and particulate matter.
-                </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                  <strong className="text-emerald-300">Action:</strong> Wear N95 masks when commuting along major arterial roads.
-                </div>
-              </div>
+                      <div className="space-y-2 text-xs pt-1">
+                        <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 space-y-1">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                            Physiological Impact
+                          </span>
+                          <p className="text-slate-300 text-[11px] leading-relaxed">{card.impact}</p>
+                        </div>
 
-              {/* Seniors */}
-              <div className="glass-card p-5 rounded-2xl border-l-4 border-l-amber-400 space-y-2">
-                <div className="flex items-center space-x-2 text-amber-400">
-                  <Activity className="w-5 h-5" />
-                  <h3 className="font-bold text-sm text-slate-100">Senior Citizens (60+ yrs)</h3>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Reduced lung elasticity and underlying cardiovascular vulnerabilities increase susceptibility to respiratory fatigue, elevated blood pressure, and pneumonia.
-                </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                  <strong className="text-amber-300">Action:</strong> Reschedule early morning walks to well-ventilated indoor spaces or sunny afternoons.
-                </div>
-              </div>
-
-              {/* Respiratory Patients */}
-              <div className="glass-card p-5 rounded-2xl border-l-4 border-l-rose-400 space-y-2">
-                <div className="flex items-center space-x-2 text-rose-400">
-                  <Stethoscope className="w-5 h-5" />
-                  <h3 className="font-bold text-sm text-slate-100">Asthma, COPD & Bronchitis</h3>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Ultrafine particulates and Ozone directly induce airway hyper-reactivity, bronchospasm, and mucous membrane inflammation, which can trigger sudden respiratory distress.
-                </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                  <strong className="text-rose-300">Action:</strong> Keep quick-relief bronchodilator inhalers accessible at all times.
-                </div>
-              </div>
-
-              {/* Cardiovascular Patients */}
-              <div className="glass-card p-5 rounded-2xl border-l-4 border-l-purple-400 space-y-2">
-                <div className="flex items-center space-x-2 text-purple-400">
-                  <HeartPulse className="w-5 h-5" />
-                  <h3 className="font-bold text-sm text-slate-100">Cardiovascular & Hypertension</h3>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Inhaled PM2.5 crosses the lung-blood barrier into the circulation, accelerating arterial vasoconstriction, microvascular inflammation, and elevating heart rate and blood pressure.
-                </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                  <strong className="text-purple-300">Action:</strong> Avoid strenuous physical exertion outdoors during high pollution periods.
-                </div>
-              </div>
-
-              {/* Pregnant Women */}
-              <div className="glass-card p-5 rounded-2xl border-l-4 border-l-indigo-400 space-y-2">
-                <div className="flex items-center space-x-2 text-indigo-400">
-                  <CheckCircle2 className="w-5 h-5" />
-                  <h3 className="font-bold text-sm text-slate-100">Expectant Mothers</h3>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Systemic inflammatory responses and Carbon Monoxide can impair placental oxygen transfer and fetal development.
-                </p>
-                <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                  <strong className="text-indigo-300">Action:</strong> Stay in clean indoor environments with HEPA air filtration.
-                </div>
-              </div>
+                        <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 space-y-1">
+                          <span className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider block">
+                            Medical Action / Advisory
+                          </span>
+                          <p className="text-emerald-200 text-[11px] leading-relaxed">{card.advisory}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-
-          <SHAPBarChart
-            title="Environmental Health Risk Contribution Factors"
-            factors={data.health_prediction.top_health_factors}
-          />
         </>
-      )}
+      ) : null}
     </div>
   );
 }
