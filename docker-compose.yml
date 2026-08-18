@@ -1,33 +1,54 @@
 version: '3.8'
 
 services:
+  # 1. MongoDB Database Engine
   mongodb:
     image: mongo:latest
     container_name: ecoguard_mongodb
+    restart: always
     ports:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
 
+  # 2. FastAPI Backend & XGBoost ML Engine
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: ecoguard_backend
+    restart: always
     ports:
       - "8000:8000"
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/
       - DATABASE_NAME=ecoguard_ai
       - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - PYTHONPATH=/app
     depends_on:
       - mongodb
 
+  # 3. Public User Website (Port 3000)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: ecoguard_frontend
+    restart: always
     ports:
-      - "3000:3000"
+      - "3000:80"
+    depends_on:
+      - backend
+
+  # 4. Creator & MLOps Engineering Console (Port 3001)
+  creator_portal:
+    build:
+      context: ./creator-portal
+      dockerfile: Dockerfile
+    container_name: ecoguard_creator
+    restart: always
+    ports:
+      - "3001:80"
     depends_on:
       - backend
 
