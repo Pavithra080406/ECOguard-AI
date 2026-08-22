@@ -275,9 +275,9 @@ export async function fetchLivePrediction(city, state = '') {
       risk_label: riskLabels[riskClass],
       risk_description: riskDescs[riskClass],
       top_health_factors: [
-        { feature: "Fine Particulate Matter (PM2.5)", importance: 0.48, direction: "increases_risk", display_name: "PM2.5 Concentration" },
-        { feature: "Coarse Dust (PM10)", importance: 0.28, direction: "increases_risk", display_name: "PM10 Particulates" },
-        { feature: "Ambient Temperature", importance: 0.14, direction: "increases_risk", display_name: "Temperature Load" }
+        { feature: "Fine Particulate Matter (PM2.5)", value: `${Math.round(basePm25 * 10) / 10} µg/m³`, impact: 0.48, importance: 0.48, direction: "increases_risk", display_name: "PM2.5 Concentration" },
+        { feature: "Coarse Dust (PM10)", value: `${Math.round(basePm10 * 10) / 10} µg/m³`, impact: 0.28, importance: 0.28, direction: "increases_risk", display_name: "PM10 Particulates" },
+        { feature: "Ambient Temperature", value: `${Math.round(baseTemp * 10) / 10} °C`, impact: 0.14, importance: 0.14, direction: "increases_risk", display_name: "Temperature Load" }
       ]
     },
     advisory: {
@@ -341,9 +341,9 @@ export async function fetchManualPrediction(formData) {
       risk_label: riskLabels[riskClass],
       risk_description: `Projected physiological risk index calculated for ${formData.city} based on simulated air pollutant and weather inputs.`,
       top_health_factors: [
-        { feature: "Fine Particulate Matter (PM2.5)", importance: 0.52, direction: "increases_risk", display_name: "PM2.5 (Simulated)" },
-        { feature: "Coarse Dust (PM10)", importance: 0.26, direction: "increases_risk", display_name: "PM10 (Simulated)" },
-        { feature: "Ambient Temperature", importance: 0.16, direction: "increases_risk", display_name: "Temperature" }
+        { feature: "Fine Particulate Matter (PM2.5)", value: `${formData.pm2_5} µg/m³`, impact: 0.52, importance: 0.52, direction: "increases_risk", display_name: "PM2.5 (Simulated)" },
+        { feature: "Coarse Dust (PM10)", value: `${formData.pm10} µg/m³`, impact: 0.26, importance: 0.26, direction: "increases_risk", display_name: "PM10 (Simulated)" },
+        { feature: "Ambient Temperature", value: `${formData.temperature} °C`, impact: 0.16, importance: 0.16, direction: "increases_risk", display_name: "Temperature" }
       ]
     },
     advisory: {
